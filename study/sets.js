@@ -4,6 +4,7 @@ export const targets = {family:'Family', genus:'Genus', species:'Species (scient
 export const builtinId = 'backyard-moth-families';
 export const defaults = {source:builtinId, target:'family', response:'recall', group:'', order:'', family:'', quality:'all'};
 export function setKey(config) {
+  if (config.keptId) return 'kept:' + config.keptId;
   if (config.draw) {
     const key = 'draw:' + config.draw.id;
     return config.draw.originalResponse && config.response !== config.draw.originalResponse ? key + ':' + config.response : key;

@@ -1,4 +1,5 @@
 import {freshRecord, grade, interval, orderedTargets, ratings} from './schedule.js';
+import {progressPrefix} from './library.js';
 import {setupOffline} from './offline.js';
 
 import {setupSettings} from './settings.js';
@@ -35,7 +36,7 @@ function shuffled(items) {
 async function start() {
   const response = await fetch('./set.json');
   if (!response.ok) throw new Error('Set unavailable');
-  const {set,config,replayTyped} = await setupSettings(await response.json());
+  const {set,config,replayTyped,refreshLibrary} = await setupSettings(await response.json());
   const typing = config.response === 'type';
   const rank = {species:'species',common:'common name',familyCommon:'family',genusCommon:'genus'}[config.target] || config.target;
   $('h1').textContent = set.title;
@@ -44,11 +45,12 @@ async function start() {
   document.title = set.title + ' · Backyard Arcade';
   const taxa = new Map(set.taxa.map(t => [t[set.nameMode], t]));
   const names = [...taxa.keys()];
-  const key = 'backyard-study:v1:' + set.id;
+  const key = progressPrefix + set.id;
   const totalPhotos = set.taxa.reduce((sum,t) => sum + t.photos.length,0);
   const unit = {family:['family','families'],genus:['genus','genera'],species:['species','species'],common:['common name','common names'],familyCommon:['family','families'],genusCommon:['genus','genera']}[config.target];
   $('#description').textContent = names.length + ' ' + unit[Number(names.length !== 1)] + '  /  ' + totalPhotos + ' photographs';
   if (names.length < 2) {
+    $('#keep').hidden = true;
     $('#desk').hidden = true;
     $('#exit').hidden = true;
     $('.download').hidden = true;
@@ -152,8 +154,10 @@ async function start() {
   function rate(rating) {
     rememberDifficulty(state,card,card.mistake || card.correct === false ? null : rating);
     grade(state,card,rating,Date.now());
+    state.records[card.name].lastPhoto = photoFor(card.name,card.index).src;
     advanceReplay();
     persist();
+    refreshLibrary();
     showNext(false,true);
   }
   function typeForm() {
@@ -324,7 +328,10 @@ async function start() {
   // Another tab may have graded this card. Resume its latest state before accepting input.
   window.addEventListener('storage',event => {
     if (event.key === key && event.newValue) {
-      state = JSON.parse(event.newValue);
+      const incoming = JSON.parse(event.newValue);
+      if (incoming.collection?.revision !== state.collection?.revision || incoming.collection?.name !== state.collection?.name ||
+          incoming.collection?.scheduled !== state.collection?.scheduled) {location.reload();return;}
+      state = incoming;
       if (state.sheetDay === new Date().toDateString()) {
         if ($('#sheet').hidden) showSheet();
       } else {

@@ -28,6 +28,16 @@ button:disabled {opacity:.55;cursor:default}
 :focus-visible {outline:3px solid var(--focus-ring);outline-offset:3px}
 [hidden] {display:none!important}
 .kicker,.plate-bar,.ledger small,.session-bar>span {font:650 11px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase}
+#library {padding:12px 0;border-bottom:1px solid var(--line)}
+#library summary {cursor:pointer;width:fit-content;font-weight:650}
+#due-badge {color:var(--lime)}
+.library-body {display:grid;gap:14px;padding:12px 0}
+.library-body button {justify-self:start}
+.library-body h2 {font:700 16px var(--sans);margin:0 0 5px}
+#due-sets,#kept-sets,.keep-actions {display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+#keep-dialog {width:min(90vw,26rem);border:1px solid var(--line);background:var(--night);color:var(--paper);padding:24px}
+#keep-dialog::backdrop {background:#17131acc}
+#keep-form,#keep-form label {display:grid;gap:10px}
 header {background:var(--deep)}
 .mast,.mast nav,.brand,.session-tools {display:flex;align-items:center}
 .mast {justify-content:space-between;min-height:63px;gap:12px}

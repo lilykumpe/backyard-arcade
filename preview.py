@@ -12,7 +12,7 @@ import shutil
 from tempfile import TemporaryDirectory
 
 ROOT = Path(__file__).resolve().parent
-ASSETS = ("index.html", "study.css", "review.js", "schedule.js", "sets.js", "inat.js", "artwork.js", "icons/index.json", "draw.js", "settings.js", "answers.js", "offline.js", "sw.js", "set.json", "display.ttf", "Barlow-OFL.txt", "moth.png", "beetle.png", "lens.png")
+ASSETS = ("index.html", "study.css", "review.js", "schedule.js", "sets.js", "library.js", "inat.js", "artwork.js", "icons/index.json", "draw.js", "settings.js", "answers.js", "offline.js", "sw.js", "set.json", "display.ttf", "Barlow-OFL.txt", "moth.png", "beetle.png", "lens.png")
 
 
 def build(output):

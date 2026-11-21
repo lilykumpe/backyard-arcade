@@ -1,5 +1,6 @@
 import {answerFor,defaults, importSource, makeSet, setKey, sources, targets, sourcePhotos, starterGroup, orderLabel, presentation, byFrequency} from './sets.js';
 
+import {collections,drawHistory,extendCollection,progressPrefix,readProgress,rememberDraw,samePractice,writeProgress} from './library.js';
 import {loadINat} from './inat.js';
 import {taxonArt} from './artwork.js';
 import {drawPool,drawPhotos} from './draw.js';
@@ -46,12 +47,13 @@ export async function setupSettings(manifest) {
     return {...c,target,draw:c.draw ? {...c.draw,id:target + '-mode-' + c.draw.id} : undefined};
   }
   function savedConfigs() {
-    const configs = read(library,[defaults]).map(migrate).filter(Boolean);
+    const configs = read(library,[]).map(migrate).filter(Boolean);
     return [...new Map(configs.map(c=>[setKey(c),c])).values()];
   }
-  let saved = savedConfigs();
+  const saved = savedConfigs();
   let active = migrate({...defaults,...read(preference,{})}) || {...defaults};
   if (active && !all.has(active.source)) active = {...defaults};
+  if (active.keptId) active = readProgress(active)?.collection?.config || active;
   let selected = active;
   const selectKeys = Object.keys(defaults);
   const config = () => Object.fromEntries(selectKeys.map(k => [k,$(k).value]));
@@ -59,7 +61,11 @@ export async function setupSettings(manifest) {
     const source = all.get(c.source);
     return presentation(source,c,makeSet(source,c)).title;
   };
-  const label = c => [setTitle(c), c.group,c.order,c.family === starterGroup ? 'Starter moth families' : c.family,targets[c.target],c.quality === 'research' ? 'Research grade' : '',c.response === 'type' ? 'Typed' : 'Recall', c.draw ? 'Draw ' + c.draw.number + ' (' + c.draw.indices.length + ' photos)' : ''].filter(Boolean).join(' · ');
+  const label = c => [setTitle(c),c.quality === 'research' ? 'Research grade' : '',c.response === 'type' ? 'Typed' : '',
+    c.draw ? 'Draw ' + c.draw.number : ''].filter(Boolean).join(' · ');
+  function titleOf(c) {
+    return c.keptId ? readProgress(c)?.collection?.name || setTitle(c) : setTitle(c);
+  }
   function options(id, values, current) {
     const select = $(id);
     select.replaceChildren(...values.map(([value,name]) => {
@@ -141,7 +147,7 @@ export async function setupSettings(manifest) {
       (s.eligible > count ? ' · ' + (s.eligible-count) + ' missing this name' : '') +
       (!viable ? '. Broaden the filters or choose another source to get at least two possible answers.' :
        previous !== c.target ? '. Switched to ' + targets[c.target] + ' because the previous target had fewer than two answers.' : '') : '';
-    const pool = drawPool(all.get(c.source),c,saved);
+    const pool = drawPool(all.get(c.source),c,[...saved,...drawHistory(c)]);
     const size = Math.min(Number($('draw-size').value),pool.count + Number(Boolean(pool.contrast)));
     $('draw').disabled = !size || !viable;
     $('draw-count').textContent = pool.exhausted ? 'All matching photos have been included. Draw again to start a new cycle.' :
@@ -151,7 +157,7 @@ export async function setupSettings(manifest) {
     $('saved').value = saved.some(v => setKey(v) === setKey(chosen)) ? setKey(chosen) : '';
   }
   function currentSelection(c) {
-    return selected.draw && selectKeys.every(k => c[k] === selected[k]) ? selected : c;
+    return (selected.draw || selected.keptId) && selectKeys.every(k => c[k] === selected[k]) ? selected : c;
   }
   function fill(c) {
     selected = c;
@@ -160,17 +166,13 @@ export async function setupSettings(manifest) {
     filters(c);
     preview();
   }
-  const savedOptions = saved.filter(c=>all.has(c.source)).map(c => {
-    const source = all.get(c.source);
-    const total = makeSet(source,c).taxa.reduce((n,t) => n + t.photos.length,0);
-    return {key:setKey(c),title:label(c),source:source.title,total};
-  }).sort((a,b) => b.total - a.total || a.title.localeCompare(b.title));
-  options('saved',[['','All matching photos'], ...savedOptions.map(s =>
-    [s.key,s.title + ' · ' + s.total.toLocaleString() + ' photos · ' + s.source])],setKey(active));
+  const previous = saved.filter(c=>all.has(c.source));
+  $('previous-label').hidden = !previous.length;
+  options('saved',[['','All matching photos'],...previous.map(c=>[setKey(c),label(c)])],setKey(active));
   fill(active);
   const previousSize = read('backyard-draw-size',24);
   if ([12,24,36,72].includes(previousSize)) $('draw-size').value = String(previousSize);
-  $('active-label').textContent = 'Playing · ' + label(active);
+  $('active-label').textContent = 'Playing · ' + titleOf(active);
   $('filters').onclick = () => {
     $('filter-panel').hidden = !$('filter-panel').hidden;
     $('filters').setAttribute('aria-expanded',String(!$('filter-panel').hidden));
@@ -178,7 +180,7 @@ export async function setupSettings(manifest) {
   };
   $('new-set').onclick = () => {
     const c = config();
-    if (c.source === bundled.id) {
+    if (c.source === bundled.id && !selected.keptId) {
       const fullSource = all.get(local?.content) || [...all.values()].find(s => s.hasStarterCopies);
       if (fullSource) {
         c.source = fullSource.id;
@@ -264,14 +266,16 @@ export async function setupSettings(manifest) {
   };
   function launch(c, replayFrom) {
     try {
-      saved = savedConfigs();
+      const same = setKey(active) === setKey(c);
+      if (!c.keptId && !saved.some(old=>setKey(old) === setKey(c)) &&
+          ((same && active.oneOff) || !readProgress(c))) c = {...c,oneOff:true};
       if (c.draw) localStorage.setItem('backyard-draw-size',JSON.stringify(Number($('draw-size').value)));
-      if (!saved.some(v=>setKey(v) === setKey(c))) saved.push(c);
-      localStorage.setItem(library,JSON.stringify(saved));
       localStorage.setItem(preference,JSON.stringify(c));
       // Starting a saved set explicitly resumes even if it was left on its sheet.
       sessionStorage.setItem('backyard-resume',setKey(c));
       if (replayFrom) sessionStorage.setItem('backyard-start-replay',JSON.stringify({from:replayFrom,to:setKey(c)}));
+      // Superseded one-off draws can be discarded once the next session is saved.
+      if (active.oneOff && !active.keptId && !replayFrom && !same) localStorage.removeItem(progressPrefix + setKey(active));
       location.reload();
     } catch {$('import-status').textContent = 'Unable to save settings in this browser.';}
   };
@@ -281,16 +285,80 @@ export async function setupSettings(manifest) {
   };
   $('draw').onclick = () => {
     const c = config();
-    const pool = drawPool(all.get(c.source),c,savedConfigs());
-    if (!$('draw').disabled && pool.count) launch({...c,draw:drawPhotos(pool,Number($('draw-size').value))});
+    const pool = drawPool(all.get(c.source),c,[...saved,...drawHistory(c)]);
+    if ($('draw').disabled || !pool.count) return;
+    try {
+      const draw = drawPhotos(pool,Number($('draw-size').value));
+      rememberDraw(c,draw);
+      if (selected.keptId && samePractice(selected,c)) {
+        const state = readProgress(selected);
+        const updated = extendCollection(state,all.get(c.source),draw);
+        writeProgress(updated,state);
+        launch(updated);
+      } else launch({...c,draw});
+    } catch {showStatus('Could not save this draw in this browser.');}
+
   };
   const source = all.get(active.source);
   const set = makeSet(source,active);
   Object.assign(set,presentation(source,active,set));
   function replayTyped() {
     const typed = {...active,response:'type'};
+    delete typed.keptId;
     if (active.draw) typed.draw = {...active.draw,originalResponse:active.draw.originalResponse || active.response};
     launch(typed,set.id);
   }
-  return {set,config:active,replayTyped};
+  const activeCollection = active.keptId ? readProgress(active)?.collection : null;
+  if (activeCollection) set.title = activeCollection.name;
+  $('keep').textContent = activeCollection?.scheduled ? 'Manage set' : 'Keep for review';
+  $('keep').onclick = () => {
+    $('keep-name').value = titleOf(active);
+    $('stop-review').hidden = !readProgress(active)?.collection?.scheduled;
+    $('keep-dialog').showModal();
+    $('keep-name').select();
+  };
+  $('keep-cancel').onclick = () => $('keep-dialog').close();
+  function saveCollection(scheduled) {
+    const state = readProgress(active);
+    const c = active.keptId ? active : {...active,keptId:crypto.randomUUID()};
+    delete c.oneOff;
+    const name = $('keep-name').value.trim();
+    if (!name && scheduled) { $('keep-name').focus(); return; }
+    try {
+      state.collection = {...state.collection,name:name || titleOf(active),config:c,scheduled};
+      writeProgress(c,state);
+      launch(c);
+    } catch {showStatus('Could not save this set.');$('keep-dialog').close();}
+  }
+  $('keep-form').onsubmit = e => {e.preventDefault();saveCollection(true);};
+  $('stop-review').onclick = () => saveCollection(false);
+  function refreshLibrary() {
+    const list = collections().filter(entry=>all.has(entry.config.source));
+    const due = list.filter(entry=>entry.due);
+    $('due-badge').textContent = due.length ? ' · ' + due.reduce((n,e)=>n+e.due,0) + ' due' : '';
+    function show(id,entries,empty,withCount) {
+      const nodes = entries.map(entry => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = entry.name + (withCount ? ' · ' + entry.due + ' due' : '');
+        b.onclick = () => launch(entry.config);
+        return b;
+      });
+      $(id).replaceChildren(...(nodes.length ? nodes : [empty]));
+    }
+    show('due-sets',due,'Nothing due.',true);
+    show('kept-sets',list,'No kept sets yet.',false);
+    const last = read(preference,active);
+    $('continue').textContent = 'Continue · ' + (setKey(last) === setKey(active) ? set.title : titleOf(all.has(last.source) ? last : active));
+  }
+  $('continue').onclick = () => {
+    const last = read(preference,active);
+    launch(all.has(last.source) ? last : active);
+  };
+  $('library').ontoggle = refreshLibrary;
+  window.addEventListener('storage',refreshLibrary);
+  document.addEventListener('visibilitychange',()=>{if (!document.hidden) refreshLibrary();});
+  setInterval(()=>{if (!document.hidden) refreshLibrary();},60000);
+  refreshLibrary();
+  return {set,config:active,replayTyped,refreshLibrary};
 }

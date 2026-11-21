@@ -22,7 +22,7 @@ export function drawPool(source, config, saved) {
   const contrast = remaining.length === 1 && groups.length > 1 ?
     groups.filter(g => !g.includes(remaining[0][0])).flat() : null;
   return {groups:remaining, contrast, count:remaining.reduce((n,g) => n + g.length,0), exhausted, cycle,
-    number:new Set(history.map(c => c.draw.id)).size + 1};
+    number:history.reduce((max,c)=>Math.max(max,c.draw.number || 1),0) + 1};
 }
 function shuffle(values) {
   const copy = [...values];

@@ -15,6 +15,11 @@
 <main>
 <section class="hero"><div class="wrap intro"><div class="hero-copy"><p class="kicker">Study set</p><h1>Backyard Arcade</h1><p id="description"></p></div><div class="field-art" aria-hidden="true"><i></i><img id="set-art" hidden alt="" width="144" height="73"></div></div></section>
 <div class="wrap bench">
+<details id="library"><summary>Study library <span id="due-badge"></span></summary>
+<div class="library-body"><button id="continue" type="button">Continue</button>
+<section><h2>Due today</h2><div id="due-sets"></div></section>
+<section><h2>Kept sets</h2><div id="kept-sets"></div></section>
+</div></details>
 <form id="settings" aria-label="Study settings">
 <div class="settings-top">
 <label>Study order<select id="order"></select></label>
@@ -24,7 +29,7 @@
 <button id="apply" class="primary">Start / resume set</button>
 </div>
 <div id="filter-panel" hidden>
-<label>Saved study sets<select id="saved"></select></label>
+<label id="previous-label">Previous sets<select id="saved"></select></label>
 <label>Observation source<select id="source"></select></label>
 <label>Import an iNaturalist CSV<input id="csv" type="file" accept=".csv,text/csv"></label>
 <label>Class<select id="group"></select></label><label>Family filter<select id="family"></select></label>
@@ -57,6 +62,11 @@
 <section id="comparison" aria-label="Answer comparison" hidden><div id="pair"></div></section>
 <section id="finished" hidden><p class="kicker">Review complete</p><h2 tabindex="-1">All caught up.</h2><p id="summary"></p><p id="next-due"></p><button id="typed-replay" class="primary">Replay with typed answers</button> <button id="extra">Practise another photograph</button></section>
 <section id="sheet" hidden><p class="kicker">Review sheet</p><h2 tabindex="-1">Answers to revisit</h2><p id="sheet-info"></p><button id="resume">Resume practice</button><div id="entries"></div></section>
-<footer class="session-bar"><div class="session-tools"><button id="exit" type="button">End &amp; review</button><div class="download"><button id="offline" disabled>↓ &nbsp; Keep this set offline</button><progress id="meter" hidden></progress><span id="download-status" role="status"></span></div></div><span id="active-label"></span></footer>
+<footer class="session-bar"><div class="session-tools"><button type="button" id="keep">Keep for review</button><button id="exit" type="button">End &amp; review</button><div class="download"><button id="offline" disabled>↓ &nbsp; Keep this set offline</button><progress id="meter" hidden></progress><span id="download-status" role="status"></span></div></div><span id="active-label"></span></footer>
+<dialog id="keep-dialog"><form id="keep-form">
+<label>Set name<input id="keep-name" required maxlength="80" autocomplete="off"></label>
+<div class="keep-actions"><button class="primary" type="submit">Save</button><button type="button" id="keep-cancel">Cancel</button></div>
+<button type="button" id="stop-review" hidden>Remove from scheduled review</button>
+</form></dialog>
 </div></main>
 </body></html>

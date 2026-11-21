@@ -1,7 +1,7 @@
 const scope = self.registration.scope;
-const shellName = 'backyard-shell-v14:' + scope;
+const shellName = 'backyard-shell-v15:' + scope;
 const photoName = 'backyard-photos-v1:' + scope;
-const shell = ['index.html','study.css','review.js','offline.js','schedule.js','sets.js','inat.js','artwork.js','icons/index.json','draw.js','settings.js','answers.js','set.json','display.ttf','moth.png','beetle.png','lens.png'];
+const shell = ['index.html','study.css','review.js','offline.js','schedule.js','sets.js','library.js','inat.js','artwork.js','icons/index.json','draw.js','settings.js','answers.js','set.json','display.ttf','moth.png','beetle.png','lens.png'];
 const home = new URL('index.html',scope).href;
 self.addEventListener('install', event => event.waitUntil((async () => {
   const cache = await caches.open(shellName);
