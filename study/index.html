@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#27232c">
+<title>Backyard Arcade</title>
+<link rel="icon" href="./lens.png">
+<link rel="preload" href="./display.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="./study.css">
+<script type="module" src="./review.js"></script>
+</head>
+<body>
+<header><div class="wrap mast"><div class="brand"><img class="arcade-mark" src="lens.png" alt="" width="39" height="21"><span>Backyard <b>Arcade</b></span></div><nav aria-label="Arcade"><button type="button" id="new-set">New photo set</button></nav></div></header>
+<main>
+<section class="hero"><div class="wrap intro"><div class="hero-copy"><p class="kicker">Study set</p><h1>Backyard Arcade</h1><p id="description"></p></div><div class="field-art" aria-hidden="true"><i></i><img id="set-art" hidden alt="" width="144" height="73"></div></div></section>
+<div class="wrap bench">
+<form id="settings" aria-label="Study settings">
+<div class="settings-top">
+<label>Study order<select id="order"></select></label>
+<label>Practise<select id="target"><option value="family" selected>Family</option><option value="genus">Genus</option><option value="species">Species (scientific name)</option><option value="common">Common name</option><option value="familyCommon" hidden>Family (common name)</option><option value="genusCommon" hidden>Genus (common name)</option></select></label>
+<label>Answer method<select id="response"><option value="recall">Say or think</option><option value="type">Type the answer</option></select></label>
+<button type="button" id="filters" aria-controls="filter-panel" aria-expanded="false">Sets &amp; filters</button>
+<button id="apply" class="primary">Start / resume set</button>
+</div>
+<div id="filter-panel" hidden>
+<label>Saved study sets<select id="saved"></select></label>
+<label>Observation source<select id="source"></select></label>
+<label>Import an iNaturalist CSV<input id="csv" type="file" accept=".csv,text/csv"></label>
+<label>Class<select id="group"></select></label><label>Family filter<select id="family"></select></label>
+<label>Quality grade<select id="quality"><option value="all">All grades</option><option value="research">Research grade only</option></select></label>
+<details id="inat-loader"><summary>Load from iNaturalist</summary>
+<div class="inat-controls">
+<label>Source<select id="inat-kind"><option value="user">User</option><option value="project">Public project</option></select></label>
+<label><span id="inat-label">Username or user ID</span><input id="inat-value" type="text" autocomplete="off" autocapitalize="none" spellcheck="false"></label>
+<label>Fetch<select id="inat-grade"><option value="research">Research grade</option><option value="all">All grades</option></select></label>
+<label>Latest observations<select id="inat-limit"><option>50</option><option selected>200</option><option>1000</option><option>5000</option><option>20000</option></select></label>
+<button id="inat-load" type="button">Load observations</button><button id="inat-cancel" type="button" hidden>Cancel</button>
+</div></details>
+<div class="draw-controls"><label>Photos per draw<select id="draw-size"><option>12</option><option selected>24</option><option>36</option><option>72</option></select></label>
+<button id="draw" type="button">Draw new set</button><span id="draw-count" role="status"></span></div>
+<p class="hint">CSV imports stay in this browser. Include the taxon columns you want to study.</p>
+</div>
+<p id="matches" role="status"></p><p id="import-status" role="status"></p>
+</form>
+<div id="notice" role="alert"></div>
+<p id="empty-study" hidden>This selection has fewer than two possible answers. Broaden the filters or choose another observation source to start practising.</p>
+<section id="desk" aria-label="Review">
+<figure class="plate"><div class="plate-bar"><span>Field photograph</span><span id="photo-id"></span></div><div class="mount"><img id="specimen" alt="Organism to identify" fetchpriority="high"><div id="image-status" role="status">Loading photograph…</div></div>
+<figcaption id="caption" hidden></figcaption></figure>
+<div class="card"><div class="card-content"><p class="kicker"><span class="dot"></span> <span id="mode" aria-live="polite">Recall</span></p>
+<h2 id="prompt" tabindex="-1">Which family?</h2>
+<dl id="taxonomy" hidden></dl>
+<div id="actions"></div>
+</div><div class="ledger"><div><span id="due-count">—</span><small>Answers due</small></div><div><span id="recall-count">0</span><small>Unaided reviews</small></div><div><span id="choice-count">0</span><small>With choices</small></div></div>
+</div></section>
+<section id="comparison" aria-label="Answer comparison" hidden><div id="pair"></div></section>
+<section id="finished" hidden><p class="kicker">Review complete</p><h2 tabindex="-1">All caught up.</h2><p id="summary"></p><p id="next-due"></p><button id="typed-replay" class="primary">Replay with typed answers</button> <button id="extra">Practise another photograph</button></section>
+<section id="sheet" hidden><p class="kicker">Review sheet</p><h2 tabindex="-1">Answers to revisit</h2><p id="sheet-info"></p><button id="resume">Resume practice</button><div id="entries"></div></section>
+<footer class="session-bar"><div class="session-tools"><button id="exit" type="button">End &amp; review</button><div class="download"><button id="offline" disabled>↓ &nbsp; Keep this set offline</button><progress id="meter" hidden></progress><span id="download-status" role="status"></span></div></div><span id="active-label"></span></footer>
+</div></main>
+</body></html>
